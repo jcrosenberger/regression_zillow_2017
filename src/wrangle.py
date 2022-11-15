@@ -18,66 +18,38 @@ warnings.filterwarnings("ignore")
 ###### SQL Query for Server ########
 ####################################
 
-def sql_zillow_2017():
+def simple_sql_zillow_2017():
     '''
     This function passes a SQL query for specified columns, converts that into a pandas dataframe and then
     returns that dataframe
     '''
     sql_query = '''
-    
-    SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips
-    FROM properties_2017
-    JOIN propertylandusetype USING (propertylandusetypeid)
-    WHERE propertylandusetypeid = 261
+    SELECT taxvaluedollarcnt, bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, fips
+    FROM properties_2017 AS prop
+
+    JOIN predictions_2017 AS pred ON prop.parcelid = pred.parcelid
+        AND pred.transactiondate >= '2017-01-01'
+
+    WHERE prop.bedroomcnt > 0
+        AND prop.bathroomcnt >0
+        AND prop.propertylandusetypeid = '261'
     ''' 
     
     # reads the returned data tables into a dataframe
     df = pd.read_sql(sql_query, env.codeup_db('zillow'))
-    
-    # this is a very big dataset, so we handle null values by dropping them
-    # df = df.isnull().sum()
+
     
     # Cache data
-    df.to_csv('data/zillow_2017.csv')
+    df.to_csv('data/simple_zillow_2017.csv')
     
     return df
-
-
-
-##################################################
-###### Initiates data pull from SQL Server #######
-##################################################
-
-def acquire_zillow_2017():
-    '''
-    This function reads in 2017's zillow data from Codeup database, writes data to
-    a csv file if a local file does not exist, and returns a DataFrame.
-    '''
-    
-    #checks to see if zillow data exists already
-    if os.path.isfile('data/zillow_2017.csv'):
-        
-        df = pd.read_csv('data/zillow_2017.csv', index_col=0)
-        
-    else: 
-        
-        df = sql_zillow_2017()
-    
-    # this is a very big dataset, so we handle null values by dropping them
-    # df = df.isnull().sum()
-
-    # Cache data
-    df.to_csv('data/zillow_2017.csv')
-    
-    return df
-
 
 
 ####################################################
 ############       rename columns       ############
 ####################################################
 
-def rename_zillow_columns(df):
+def simple_rename_columns(df):
     df = df.rename(columns={'bedroomcnt':'bedrooms', 
                             'bathroomcnt':'baths', 
                             'calculatedfinishedsquarefeet':'sq_feet', 
@@ -92,7 +64,7 @@ def rename_zillow_columns(df):
 ############       handling outliers       ############
 #######################################################
 
-def handle_outliers(df):
+def simple_handle_outliers(df):
     """Manually handle outliers that do not represent properties likely for 99% of buyers and zillow visitors"""
     df = df[df.bedrooms <= 6]
     
@@ -110,7 +82,7 @@ def handle_outliers(df):
 ############       handling naans       ############
 ####################################################
 
-def deal_with_nulls(df):
+def simple_deal_with_nulls(df):
 
     # fills whitespace will Naans
     df = df.replace(r'^\s*s', np.NaN, regex=True)
@@ -129,7 +101,7 @@ def deal_with_nulls(df):
 #######         cast columns as int          #######
 ####################################################
 
-def zillow_columns_to_int(df):
+def simple_columns_to_int(df):
 
     # renames columns to be more intelligable and able to be referenced
     # renames columns to be more intelligable and able to be referenced
@@ -148,52 +120,60 @@ def zillow_columns_to_int(df):
     return df
 
 
+#######################################################
+#######     calls simple cleaning functions     #######
+#######################################################
+
+def simple_cleaning(df):
+    # runs functions defined earlier in program which clean up dataframe    
+    df = simple_rename_columns(df)
+    df = simple_deal_with_nulls(df)
+    df = simple_columns_to_int(df)    
+    df = simple_handle_outliers(df)
+
+    return df 
+
+
 #############################################################
 ###### Cleans zillow dataframe using cleaning modules #######
 #############################################################
 
-def clean_zillow_2017(small = False):
+def zillow_2017(simple = True, small = False):
     '''
     This is a very large dataset and the values can get very wide so we will handle null values by dropping them.
     The process will be to first turn whitespace into null values and then drop rows with null values from columns 
     which we find to be important.  
     '''
 
+    if simple == True:
+        # checks to see if wrangled zillow data exists already
+        # if it does, then fills df with the stored data
+        # retains "small" variable option
+        if os.path.isfile('data/simple_wrangled_zillow_2017.csv'):
 
-    # checks to see if wrangled zillow data exists already
-    # if it does, then fills df with the stored data
-    # retains "small" variable option
-    if os.path.isfile('data/wrangled_zillow_2017.csv'):
+            df = pd.read_csv('data/simple_wrangled_zillow_2017.csv')
 
-        df = pd.read_csv('data/wrangled_zillow_2017.csv')
+            if small == True:
+                df = df.sample(frac=0.5)
 
+            return df
+
+        else:
+            df = acquire_zillow_2017()
+
+        # calls function to clean dirty data
+        df = simple_cleaning(df)
+    
+        # if a smaller sized sample of the data is sought to be used to conserve computational resources,
+        # the small variable can be modified to cut the dataframe down to half its original size
         if small == True:
             df = df.sample(frac=0.5)
 
-        return df
-
-    else:
-        df = acquire_zillow_2017()
+        # Cache data so future runs of this program go by more quickly
+        df.to_csv('data/simple_zillow_2017.csv')
 
 
-
-    # runs functions defined earlier in program which clean up dataframe    
-    df = rename_zillow_columns(df)
-    df = deal_with_nulls(df)
-    df = zillow_columns_to_int(df)    
-    df = handle_outliers(df)
-    
-
-    # if a smaller sized sample of the data is sought to be used to conserve computational resources,
-    # the small variable can be modified to cut the dataframe down to half its original size
-    if small == True:
-        df = df.sample(frac=0.5)
-
-    # Cache data so future runs of this program go by more quickly
-    df.to_csv('data/zillow_2017.csv')
-
-
-    return df 
+        return df 
 
 
 
