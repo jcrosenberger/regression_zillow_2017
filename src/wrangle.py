@@ -23,6 +23,7 @@ def simple_sql_zillow_2017():
     This function passes a SQL query for specified columns, converts that into a pandas dataframe and then
     returns that dataframe
     '''
+
     sql_query = '''
     SELECT taxvaluedollarcnt, bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, fips
     FROM properties_2017 AS prop
@@ -53,9 +54,8 @@ def simple_rename_columns(df):
     df = df.rename(columns={'bedroomcnt':'bedrooms', 
                             'bathroomcnt':'baths', 
                             'calculatedfinishedsquarefeet':'sq_feet', 
-                            'taxvaluedollarcnt':'tax_value',
-                            'yearbuilt':'year_built',
-                            'taxamount':'tax_amount'})
+                            #'yearbuilt':'year_built',
+                            'taxvaluedollarcnt':'tax_value'})
     return df
 
 
@@ -67,11 +67,8 @@ def simple_rename_columns(df):
 def simple_handle_outliers(df):
     """Manually handle outliers that do not represent properties likely for 99% of buyers and zillow visitors"""
     df = df[df.bedrooms <= 6]
-    
     df = df[df.baths <= 6]
-
     df = df[df.tax_value < 2_000_000]
-
     df = df[df.sq_feet < 10000]
 
     return df
@@ -88,8 +85,8 @@ def simple_deal_with_nulls(df):
     df = df.replace(r'^\s*s', np.NaN, regex=True)
 
     # the columns which we want to drop naan values from
-    naan_drop_columns = ['sq_feet', 'tax_value', 'year_built', 'tax_amount']    
-    
+    #naan_drop_columns = ['sq_feet', 'tax_value', 'year_built', 'tax_amount']    
+    naan_drop_columns = ['tax_value', 'sq_feet']    
 
     # drop naans based on the columns identified above
     df = df.dropna(subset = naan_drop_columns)
@@ -104,14 +101,14 @@ def simple_deal_with_nulls(df):
 def simple_columns_to_int(df):
 
     # renames columns to be more intelligable and able to be referenced
-    # renames columns to be more intelligable and able to be referenced
     df['bedrooms'] = df['bedrooms'].astype(int) 
     df['baths'] = df['baths'].astype(int)
-    df['sq_feet'] = df['sq_feet'].astype(int)
-    df['tax_value'] = df['tax_value'].astype(int)
-    df['year_built'] = df['year_built'].astype(int)
-    df['tax_amount'] = df['tax_amount'].astype(int)
     df['fips'] = df['fips'].astype(int)
+    df['tax_value'] = df['tax_value'].astype(int)
+    df['sq_feet'] = df['sq_feet'].astype(int)
+    #df['year_built'] = df['year_built'].astype(int)
+    #df['tax_amount'] = df['tax_amount'].astype(int)
+
     
     # way to cast all column elements as integers
     #df[(list(df.columns))].astype(int) 
@@ -159,7 +156,7 @@ def zillow_2017(simple = True, small = False):
             return df
 
         else:
-            df = acquire_zillow_2017()
+            df = simple_sql_zillow_2017()
 
         # calls function to clean dirty data
         df = simple_cleaning(df)
@@ -170,7 +167,7 @@ def zillow_2017(simple = True, small = False):
             df = df.sample(frac=0.5)
 
         # Cache data so future runs of this program go by more quickly
-        df.to_csv('data/simple_zillow_2017.csv')
+        df.to_csv('data/simple_wrangled_zillow_2017.csv')
 
 
         return df 

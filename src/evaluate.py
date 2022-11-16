@@ -28,7 +28,7 @@ def calc_performance(y, yhat):
     ess = ((yhat - y.mean())**2).sum()
     
     # sum of squres errors
-    sse = mean_squared_error(y, yhat)*len(df)
+    sse = mean_squared_error(y, yhat)*len(y)
     
     # total sum of squares
     tss = ess+sse
@@ -46,18 +46,20 @@ def calc_performance(y, yhat):
 
 
 
-def regression_errors(y, yhat):
-
+def regression_errors(y, yhat, do_print = True):
 
     ess, sse, tss, mse, rmse, r2 = calc_performance(y, yhat)
+    if do_print == True:
+       print(f'''Model Performance
+        ESS = {round(ess,5)}
+        SSE = {round(sse,5)}
+        TSS = {round(tss,5)}
+        MSE = {round(mse,5)}
+        RMSE = {round(rmse,5)}
+        R^2 = {round(r2,10)}''')
 
-    print(f'''Model Performance
-      ESS = {round(ess,5)}
-      SSE = {round(sse,5)}
-      TSS = {round(tss,5)}
-      MSE = {round(mse,5)}
-      RMSE = {round(rmse,5)}''')
-      #\nR^2 = {round(r2,10)})
+    else:
+        return ess, sse, tss, mse, rmse, r2 
 
 
 
