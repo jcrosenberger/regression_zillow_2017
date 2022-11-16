@@ -16,7 +16,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from math import sqrt
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 
@@ -25,7 +25,7 @@ def plot_residuals(y, yhat):
 
 
 
-def calc_performance(y, yhat):
+def calc_performance(y, yhat, featureN = 2):
     # explained sum of squares
     ess = ((yhat - y.mean())**2).sum()
     
@@ -43,14 +43,29 @@ def calc_performance(y, yhat):
     
     # R squared
     r2 = ess/tss
+    r2V2 = r2_score(y, yhat)
+    
+    if featureN > 2:
+        # Adjusted R Squared
+        AdjR2= 1-(1-r2)*(len(y)-1)/(len(y)-featureN-1)
 
-    return ess, sse, tss, mse, rmse, r2
+        return ess, sse, tss, mse, rmse, AdjR2    
+    
+    else:
+        return ess, sse, tss, mse, rmse, r2, r2V2
 
 
 
-def regression_errors(y, yhat, df=False):
+def regression_errors(y, yhat, df=False, features=2):
+    '''
+    This module does the legwork for evaluating model efficacy. 
+    The default argument 'df' will determine whether to pass a data frame with a dictionary 
+    when called or to print the evaluation metrics. 
+    The AdjR2Feature default argument allows for tuning an Adjusted R^2 value, which is more accurate
+    than R^2 for models with multiple features/variables 
 
-    ess, sse, tss, mse, rmse, r2 = calc_performance(y, yhat)
+    '''
+    ess, sse, tss, mse, rmse, r2, r2v2 = calc_performance(y, yhat, features)
     
     
     if df==False:
@@ -72,7 +87,8 @@ def regression_errors(y, yhat, df=False):
             'TSS' : round(tss,3),
             'MSE' : round(mse,3),
             'RMSE': round(rmse,3),
-            'AdjR^2': round(r2,3)
+            'R^2': round(r2,3),
+            'R2V2': round(r2v2,3)
             }
             
         return df
