@@ -13,6 +13,8 @@ Create a file named evaluate.py that contains the following functions.
 '''
 
 import seaborn as sns
+import pandas as pd
+import numpy as np
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
@@ -46,20 +48,55 @@ def calc_performance(y, yhat):
 
 
 
-def regression_errors(y, yhat, do_print = True):
+def regression_errors(y, yhat, df=False):
 
     ess, sse, tss, mse, rmse, r2 = calc_performance(y, yhat)
-    if do_print == True:
-       print(f'''Model Performance
+    
+    
+    if df==False:
+        print(f'''Model Performance
         ESS = {round(ess,5)}
         SSE = {round(sse,5)}
         TSS = {round(tss,5)}
         MSE = {round(mse,5)}
         RMSE = {round(rmse,5)}
         R^2 = {round(r2,10)}''')
+    
 
     else:
-        return ess, sse, tss, mse, rmse, r2 
+        df = pd.DataFrame()
+    
+        df ={
+            'ESS' : round(ess,3),
+            'SSE' : round(sse,3),
+            'TSS' : round(tss,3),
+            'MSE' : round(mse,3),
+            'RMSE': round(rmse,3),
+            'AdjR^2': round(r2,3)
+            }
+            
+        return df
+
+
+
+
+def evaluate_models(y, yhat):
+
+    ess, sse, tss, mse, rmse, r2 = calc_performance(y, yhat)
+
+    df = pd.DataFrame()
+    
+    df ={
+            'ESS' : round(ess,3),
+            'SSE' : round(sse,3),
+            'TSS' : round(tss,3),
+            'MSE' : round(mse,3),
+            'RMSE': round(rmse,3),
+            'AdjR^2': round(r2,3)
+        }
+    
+        
+    return df
 
 
 
