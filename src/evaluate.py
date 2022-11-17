@@ -43,16 +43,17 @@ def calc_performance(y, yhat, featureN = 2):
     
     # R squared
     r2 = ess/tss
-    r2V2 = r2_score(y, yhat)
+    # A second version of R Squared which may be more accurate
+    r2v2 = r2_score(y, yhat)
     
     if featureN > 2:
         # Adjusted R Squared
-        AdjR2= 1-(1-r2)*(len(y)-1)/(len(y)-featureN-1)
+        adjR2= 1-(1-r2v2)*(len(y)-1)/(len(y)-featureN-1)
 
-        return ess, sse, tss, mse, rmse, AdjR2    
+        return ess, sse, tss, mse, rmse, r2v2, adjR2    
     
     else:
-        return ess, sse, tss, mse, rmse, r2, r2V2
+        return ess, sse, tss, mse, rmse, r2v2
 
 
 
@@ -65,34 +66,61 @@ def regression_errors(y, yhat, df=False, features=2):
     than R^2 for models with multiple features/variables 
 
     '''
-    ess, sse, tss, mse, rmse, r2, r2v2 = calc_performance(y, yhat, features)
     
     
-    if df==False:
-        print(f'''Model Performance
-        ESS = {round(ess,5)}
-        SSE = {round(sse,5)}
-        TSS = {round(tss,5)}
-        MSE = {round(mse,5)}
-        RMSE = {round(rmse,5)}
-        R^2 = {round(r2,10)}''')
-    
+    if features <= 2:
+        ess, sse, tss, mse, rmse, r2v2 = calc_performance(y, yhat)
+        if df==False:
+            print(f'''Model Performance
+            ESS = {round(ess,5)}
+            SSE = {round(sse,5)}
+            TSS = {round(tss,5)}
+            MSE = {round(mse,5)}
+            RMSE = {round(rmse,5)}
+            R2 = {round(r2v2,10)}''')
+        
 
-    else:
-        df = pd.DataFrame()
-    
-        df ={
-            'ESS' : round(ess,3),
-            'SSE' : round(sse,3),
-            'TSS' : round(tss,3),
-            'MSE' : round(mse,3),
-            'RMSE': round(rmse,3),
-            'R^2': round(r2,3),
-            'R2V2': round(r2v2,3)
-            }
-            
-        return df
+        else:
+            df = pd.DataFrame()
+        
+            df ={
+                'ESS' : round(ess,3),
+                'SSE' : round(sse,3),
+                'TSS' : round(tss,3),
+                'MSE' : round(mse,3),
+                'RMSE': round(rmse,3),
+                'R2': round(r2v2,3)
+                }
+                
+            return df
 
+    else: 
+        ess, sse, tss, mse, rmse, r2v2, adjR2 = calc_performance(y, yhat, features)
+        if df==False:
+            print(f'''Model Performance
+            ESS = {round(ess,5)}
+            SSE = {round(sse,5)}
+            TSS = {round(tss,5)}
+            MSE = {round(mse,5)}
+            RMSE = {round(rmse,5)}
+            R^2 = {round(r2v2,10)}
+            AdjR^2 = {round(adjR2,5)}''')
+        
+
+        else:
+            df = pd.DataFrame()
+        
+            df ={
+                'ESS' : round(ess,3),
+                'SSE' : round(sse,3),
+                'TSS' : round(tss,3),
+                'MSE' : round(mse,3),
+                'RMSE': round(rmse,3),
+                'R^2' : round(r2v2,3),
+                'AdjR^2':round(adjR2,3)
+                }
+                
+            return df
 
 
 

@@ -148,7 +148,7 @@ def zillow_2017(simple = True, small = False):
         # retains "small" variable option
         if os.path.isfile('data/simple_wrangled_zillow_2017.csv'):
 
-            df = pd.read_csv('data/simple_wrangled_zillow_2017.csv')
+            df = pd.read_csv('data/simple_wrangled_zillow_2017.csv', index_col=0)
 
             if small == True:
                 df = df.sample(frac=0.5)
