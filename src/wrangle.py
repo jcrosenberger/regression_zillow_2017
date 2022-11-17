@@ -66,10 +66,21 @@ def simple_rename_columns(df):
 
 def simple_handle_outliers(df):
     """Manually handle outliers that do not represent properties likely for 99% of buyers and zillow visitors"""
-    df = df[df.bedrooms <= 6]
-    df = df[df.baths <= 6]
-    df = df[df.tax_value < 2_000_000]
-    df = df[df.sq_feet < 10000]
+    high_bed_bool = df['bedrooms'] <= 5 
+    low_bed_bool  = df['bedrooms'] > 1
+    tax_bool = df['tax_value'] < 1757580
+    bathroom_bool = df['baths'] <= 4
+    sq_feet_bool = df['sq_feet'] < 6000
+
+    df = df[high_bed_bool & low_bed_bool]
+    df = df[tax_bool]
+    df = df[bathroom_bool]
+    df = df[sq_feet_bool]
+
+    #df = df[df.bedrooms <= 6]
+    #df = df[df.baths <= 6]
+    #df = df[df.tax_value < 2_000_000]
+    #df = df[df.sq_feet < 6000]
 
     return df
 
