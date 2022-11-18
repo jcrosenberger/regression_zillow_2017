@@ -13,6 +13,37 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+def complex_sql_zillow_2017():
+    '''
+    This function passes a SQL query for specified columns, converts 
+    that into a pandas dataframe and then returns that dataframe
+    '''
+
+    sql_query = '''
+    SELECT taxvaluedollarcnt, bedroomcnt, bathroomcnt, calculatedbathnbr, 
+    calculatedfinishedsquarefeet, lotsizesquarefeet, yearbuilt, fips
+    FROM properties_2017 AS prop
+
+    JOIN predictions_2017 AS pred ON prop.parcelid = pred.parcelid
+        AND pred.transactiondate >= '2017-01-01'
+
+    WHERE prop.bedroomcnt > 0
+        AND prop.bathroomcnt >0
+        AND prop.propertylandusetypeid = '261'
+    ''' 
+    
+    # reads the returned data tables into a dataframe
+    df = pd.read_sql(sql_query, env.codeup_db('zillow'))
+
+    
+    # Cache data
+    df.to_csv('data/complex_zillow_2017.csv')
+    
+    return df
+
+
+
+
 
 ####################################
 ###### SQL Query for Server ########
@@ -20,8 +51,8 @@ warnings.filterwarnings("ignore")
 
 def simple_sql_zillow_2017():
     '''
-    This function passes a SQL query for specified columns, converts that into a pandas dataframe and then
-    returns that dataframe
+    This function passes a SQL query for specified columns, converts 
+    that into a pandas dataframe and then returns that dataframe
     '''
 
     sql_query = '''
@@ -50,27 +81,45 @@ def simple_sql_zillow_2017():
 ############       rename columns       ############
 ####################################################
 
-def simple_rename_columns(df):
-    df = df.rename(columns={'bedroomcnt':'bedrooms', 
-                            'bathroomcnt':'baths', 
-                            'calculatedfinishedsquarefeet':'sq_feet', 
-                            #'yearbuilt':'year_built',
-                            'taxvaluedollarcnt':'tax_value'})
-    return df
+def rename_columns(df, simple=True):
+    
+    if simple == True:
+        df = df.rename(columns={'bedroomcnt':'bedrooms', 
+                                'bathroomcnt':'baths', 
+                                'calculatedfinishedsquarefeet':'sq_feet', 
+                                #'yearbuilt':'year_built',
+                                'taxvaluedollarcnt':'tax_value'})
+        
+    
+    
+    else:
+        df = df.rename(columns={'bedroomcnt':'bedrooms', 
+                                'bathroomcnt':'baths', 
+                                'calculatedfinishedsquarefeet':'sq_feet', 
+                                'yearbuilt':'year_built',
+                                'taxvaluedollarcnt':'tax_value',
+                                'calculatedbathnbr':'bath_adv',
+                                'lotsizesquarefeet':'lot_size'                               
+                                })
+        
 
+    return df 
 
 
 #######################################################
 ############       handling outliers       ############
 #######################################################
 
-def simple_handle_outliers(df):
-    """Manually handle outliers that do not represent properties likely for 99% of buyers and zillow visitors"""
+def handle_outliers(df, simple=True):
+    """Manually handle outliers that do not represent properties likely 
+    for 99% of buyers and zillow visitors"""
     high_bed_bool = df['bedrooms'] <= 5 
     low_bed_bool  = df['bedrooms'] > 1
     tax_bool = df['tax_value'] < 1757580
     bathroom_bool = df['baths'] <= 4
     sq_feet_bool = df['sq_feet'] < 6000
+    bathroom_bool2 = df['bath_adv'] <= 4.5
+
 
     df = df[high_bed_bool & low_bed_bool]
     df = df[tax_bool]
@@ -80,7 +129,7 @@ def simple_handle_outliers(df):
     #df = df[df.bedrooms <= 6]
     #df = df[df.baths <= 6]
     #df = df[df.tax_value < 2_000_000]
-    #df = df[df.sq_feet < 6000]
+    #df = df[df.sq_feet < 10000]
 
     return df
 
@@ -90,14 +139,14 @@ def simple_handle_outliers(df):
 ############       handling naans       ############
 ####################################################
 
-def simple_deal_with_nulls(df):
+def deal_with_nulls(df, simple=True):
 
     # fills whitespace will Naans
     df = df.replace(r'^\s*s', np.NaN, regex=True)
 
     # the columns which we want to drop naan values from
     #naan_drop_columns = ['sq_feet', 'tax_value', 'year_built', 'tax_amount']    
-    naan_drop_columns = ['tax_value', 'sq_feet']    
+    naan_drop_columns = ['tax_value', 'sq_feet', 'bath_adv', 'lot_size', 'year_built']    
 
     # drop naans based on the columns identified above
     df = df.dropna(subset = naan_drop_columns)
@@ -109,16 +158,26 @@ def simple_deal_with_nulls(df):
 #######         cast columns as int          #######
 ####################################################
 
-def simple_columns_to_int(df):
+def columns_to_int(df, simple=True):
 
-    # renames columns to be more intelligable and able to be referenced
-    df['bedrooms'] = df['bedrooms'].astype(int) 
-    df['baths'] = df['baths'].astype(int)
-    df['fips'] = df['fips'].astype(int)
-    df['tax_value'] = df['tax_value'].astype(int)
-    df['sq_feet'] = df['sq_feet'].astype(int)
-    #df['year_built'] = df['year_built'].astype(int)
-    #df['tax_amount'] = df['tax_amount'].astype(int)
+    if simple==True:
+        # recasts columns named as integers
+        df['bedrooms'] = df['bedrooms'].astype(int) 
+        df['baths'] = df['baths'].astype(int)
+        df['fips'] = df['fips'].astype(int)
+        df['tax_value'] = df['tax_value'].astype(int)
+        df['sq_feet'] = df['sq_feet'].astype(int)
+
+    else:
+        # recasts columns named as integers
+        df['bedrooms'] = df['bedrooms'].astype(int) 
+        df['baths'] = df['baths'].astype(int)
+        df['fips'] = df['fips'].astype(int)
+        df['tax_value'] = df['tax_value'].astype(int)
+        df['sq_feet'] = df['sq_feet'].astype(int)
+        df['lot_size'] = df['lot_size'].astype(int)
+        df['year_built'] = df['year_built'].astype(int)
+    
 
     
     # way to cast all column elements as integers
@@ -132,12 +191,20 @@ def simple_columns_to_int(df):
 #######     calls simple cleaning functions     #######
 #######################################################
 
-def simple_cleaning(df):
+def cleaning(df, simple=True):
     # runs functions defined earlier in program which clean up dataframe    
-    df = simple_rename_columns(df)
-    df = simple_deal_with_nulls(df)
-    df = simple_columns_to_int(df)    
-    df = simple_handle_outliers(df)
+    if simple==True:
+        df = rename_columns(df)
+        df = deal_with_nulls(df)
+        df = columns_to_int(df)    
+        df = handle_outliers(df)
+        
+    else:
+        df = rename_columns(df, simple=False)
+        df = deal_with_nulls(df, simple=False)
+        df = columns_to_int(df, simple=False)    
+        df = handle_outliers(df, simple=False)
+
 
     return df 
 
@@ -148,8 +215,9 @@ def simple_cleaning(df):
 
 def zillow_2017(simple = True, small = False):
     '''
-    This is a very large dataset and the values can get very wide so we will handle null values by dropping them.
-    The process will be to first turn whitespace into null values and then drop rows with null values from columns 
+    This is a very large dataset and the values can get very wide so we will handle 
+    null values by dropping them. The process will be to first turn whitespace into 
+    null values and then drop rows with null values from columns 
     which we find to be important.  
     '''
 
@@ -170,7 +238,7 @@ def zillow_2017(simple = True, small = False):
             df = simple_sql_zillow_2017()
 
         # calls function to clean dirty data
-        df = simple_cleaning(df)
+        df = cleaning(df)
     
         # if a smaller sized sample of the data is sought to be used to conserve computational resources,
         # the small variable can be modified to cut the dataframe down to half its original size
@@ -184,6 +252,35 @@ def zillow_2017(simple = True, small = False):
         return df 
 
 
+    if simple == False:
+        # checks to see if wrangled zillow data exists already
+        # if it does, then fills df with the stored data
+        # retains "small" variable option
+        if os.path.isfile('data/complex_wrangled_zillow_2017.csv'):
+
+            df = pd.read_csv('data/complex_wrangled_zillow_2017.csv', index_col=0)
+
+            if small == True:
+                df = df.sample(frac=0.5)
+
+            return df
+
+        else:
+            df = complex_sql_zillow_2017()
+
+        # calls function to clean dirty data
+        df = cleaning(df, simple=False)
+    
+        # if a smaller sized sample of the data is sought to be used to conserve computational resources,
+        # the small variable can be modified to cut the dataframe down to half its original size
+        if small == True:
+            df = df.sample(frac=0.5)
+
+        # Cache data so future runs of this program go by more quickly
+        df.to_csv('data/complex_wrangled_zillow_2017.csv')
+
+
+        return df 
 
 
 ###########################################################################
