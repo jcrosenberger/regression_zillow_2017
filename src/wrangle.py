@@ -296,7 +296,8 @@ def zillow_2017(simple = True, small = False):
 
         # calls function to clean dirty data
         df = cleaning(df, simple=False)
-    
+        df['squared_sq_feet'] = df['sq_feet']*df['sq_feet']
+        df= df.drop(columns = 'sq_feet')
         # if a smaller sized sample of the data is sought to be used to conserve computational resources,
         # the small variable can be modified to cut the dataframe down to half its original size
         if small == True:
