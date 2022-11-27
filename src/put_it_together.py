@@ -7,6 +7,8 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from scipy.stats import spearmanr
 
+
+
 def explore_simple(df):
     plt.figure(figsize=(10,10))
     variables = ['tax_value', 'bedrooms', 'baths', 'sq_feet']
@@ -82,7 +84,7 @@ def fips_viz(df):
 
 def spearman_test(df, target_var, test_var):
     r, p_value = spearmanr(df[target_var], df[test_var])
-    print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
+    print(f'Correlation Coefficient of {test_var}: {r}\nP-value: {p_value}')
 
 
 def baseline_calc(df):
