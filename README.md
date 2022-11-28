@@ -26,6 +26,7 @@
 ## Deliverables
 - Provide a Github repo containing a readme (thanks for taking a look!), a final report in a jupyter notebook, python modules to import and prepare data for analysis, supplemental artifacts of work in the form of exploratory and modeling notebooks
 
+
 ## Data Dictionary
 **For the Simple Model**
 | Column | Description |
@@ -33,7 +34,20 @@
 | baths | Number of Bathrooms |
 | bedrooms | Number of Bedrooms |
 | sq_feet | Total finished square feet of home |
-| sq_feet_2 | The square feet of a home squared again to give the variable polynomial features |
+| fips | Broken down below. Fips represents the code for the county where a house resides |
+| fips: 6037 | Los Angeles County |
+| fips: 6059 | Orange County |
+| fips: 6111 | Ventura County |
+| tax_value | Proxy for the home's value to potential buyers |
+
+
+**For the Complex Model**
+| Column | Description |
+| --- | ---|
+| bath_adv | Number of Bathrooms, including partial bathrooms |
+| bedrooms | Number of Bedrooms |
+| lot size | The size of the lot on which the house sits |
+| squared_sq_feet| The square feet of a home squared again to give the variable polynomial features |
 | fips | Broken down below. Fips represents the code for the county where a house resides |
 | fips: 6037 | Los Angeles County |
 | fips: 6059 | Orange County |
