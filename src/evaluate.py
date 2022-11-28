@@ -153,3 +153,32 @@ def better_than_baseline(y, yhat):
         print('My OSL model performs better than baseline')
     else:
         print('My OSL model performs worse than baseline. :( )')
+
+
+
+''' 
+making models for each county
+'''
+
+# la county
+# fit data to simple regression
+lm.fit(la_x_train, la_y_train)
+
+# make predictions
+la_simple_model = lm.predict(la_x_train)
+
+# orange county
+# fit data to simple regression
+lm.fit(or_x_train, or_y_train)
+
+# make predictions
+or_simple_model = lm.predict(or_x_train)
+
+# la county
+# fit data to simple regression
+lm.fit(vent_x_train, vent_y_train)
+
+# make predictions
+vent_simple_model = lm.predict(vent_x_train)
+
+
