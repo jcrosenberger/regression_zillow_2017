@@ -158,7 +158,7 @@ def better_than_baseline(y, yhat):
 
 ''' 
 making models for each county
-'''
+
 
 # la county
 # fit data to simple regression
@@ -181,4 +181,4 @@ lm.fit(vent_x_train, vent_y_train)
 # make predictions
 vent_simple_model = lm.predict(vent_x_train)
 
-
+'''
