@@ -9,6 +9,9 @@ from scipy.stats import spearmanr
 
 
 
+
+
+
 def explore_simple(df):
     plt.figure(figsize=(10,10))
     variables = ['tax_value', 'bedrooms', 'baths', 'sq_feet']

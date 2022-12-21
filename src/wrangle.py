@@ -28,7 +28,7 @@ def zillow_2017(simple = True, small = False):
     '''
 
     if simple == True:
-        # checks to see if wrangled zillow data exists already
+        # checks to see if wrangled zillow data already already exists
         # if it does, then fills df with the stored data
         # retains "small" variable option
         if os.path.isfile('data/simple_wrangled_zillow_2017.csv'):
@@ -59,9 +59,9 @@ def zillow_2017(simple = True, small = False):
 
 
     if simple == False:
-        # checks to see if wrangled zillow data exists already
-        # if it does, then fills df with the stored data
-        # retains "small" variable option
+        '''checks to see if wrangled zillow data exists already
+        if it does, then fills df with the stored data
+        retains "small" variable option'''
         if os.path.isfile('data/complex_wrangled_zillow_2017.csv'):
 
             df = pd.read_csv('data/complex_wrangled_zillow_2017.csv', index_col=0)
@@ -78,8 +78,8 @@ def zillow_2017(simple = True, small = False):
         df = cleaning(df, simple=False)
         df['squared_sq_feet'] = df['sq_feet']*df['sq_feet']
         df= df.drop(columns = 'sq_feet')
-        # if a smaller sized sample of the data is sought to be used to conserve computational resources,
-        # the small variable can be modified to cut the dataframe down to half its original size
+        '''if a smaller sized sample of the data is sought to be used to conserve computational resources,
+        the small variable can be modified to cut the dataframe down to half its original size'''
         if small == True:
             df = df.sample(frac=0.5)
 
