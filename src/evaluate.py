@@ -29,6 +29,77 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 
 
 
+
+##############################################
+######      Continuous Test DataFrame      ########
+##############################################
+def pearson_test_df(df, target_var, test_var_list):
+    '''default test for continuous to continuous correlation tests. 
+    Handles linear relationships well'''
+    
+    pearson_df = pd.DataFrame(
+        {'Potential_Feature':[],
+         'Coefficient' :[],
+         'P-Value' : [],
+         'Significance' : [],
+         'Keep' : [],})
+
+    for item in test_var_list:
+        r, p_value = pearsonr(df[target_var], df[item])
+        if 1 - p_value >= 0.95:
+            keeper = 'Yes'
+        else:
+            keeper = 'No'
+        
+        pearson_df = pearson_df.append(
+        {'Potential_Feature': item,
+         'Coefficient' : r,
+         'P-Value' : p_value,
+         'Significance' : 1-p_value,
+         'Keep' : keeper},
+        ignore_index = True)
+        
+    return pearson_df
+
+
+########################################################
+######       Categorical Test DataFrame       ########
+########################################################
+
+#######       Chi^2 is an easier test to use       #######
+
+def chi2_categorical_test(df, target_var, test_var_list):
+    '''
+    The chi2 test is used to determine if a statistically significant relationship 
+    exists between two categorical variables
+    
+    This function takes in a list of variables to test against a singular target variable
+    returning a dataframe which should help to determine if the list of variables should
+    be accepted or rejected for use in a model to explain the target variable
+    '''
+    
+    chi2_df = pd.DataFrame(columns =[
+         'Potential_Feature', 'Chi2_stat', 'P-Value', 'Significance', 'Keep'])
+    
+    
+    for item in test_var_list:
+        ctab = pd.crosstab(df[item],df[target_var])
+        chi, p_value, degf, expected = chi2_contingency(ctab)
+        
+        if 1 - p_value >= 0.95:
+            keeper = 'Yes'
+        else:
+            keeper = 'No'
+            
+        # potential = item, 
+        # significance = 1-p_value
+        # keep = keeper
+        chi2_df.loc[len(chi2_df)] = [item, chi, p_value, 1-p_value, keeper]
+        
+    return chi2_df.sort_values(by='Keep', ascending = False)
+
+
+
 def plot_residuals(y, yhat):
     fig = sns.scatterplot(x = y, y = yhat)
 
