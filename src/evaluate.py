@@ -20,13 +20,18 @@ from math import sqrt
 #evaluation libraries
 from sklearn.metrics import mean_squared_error, r2_score
 
-# linear regressions
+# machine learning libraries
 from sklearn.linear_model import LinearRegression, LassoLars, TweedieRegressor
+from sklearn.feature_selection import RFE
+from sklearn.metrics import mean_squared_error, explained_variance_score
+
 
 # decision tree-based regressions
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 
+# custom modules
+import src.wrangle as wr
 
 
 
@@ -203,7 +208,6 @@ def regression_errors(y, yhat, df=False, features=2):
             return df
 
 
-
 def evaluate_models(y, yhat):
 
     ess, sse, tss, mse, rmse, r2 = calc_performance(y, yhat)
@@ -264,21 +268,6 @@ vent_simple_model = lm.predict(vent_x_train)
 '''
 
 
-import pandas as pd
-import numpy as np
-
-
-from sklearn.preprocessing import  PolynomialFeatures
-from sklearn.feature_selection import RFE
-from sklearn.metrics import mean_squared_error, explained_variance_score
-
-# linear regressions
-from sklearn.linear_model import LinearRegression, LassoLars, TweedieRegressor
-
-# non-linear regressions
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-
 
 
 
@@ -291,9 +280,9 @@ features_counties = ['garage_sqft', 'age','beds','garage','fireplace','bath',\
             'bed_bath_ratio','lot_sqft','tax_amount','hottub_spa', 'logerror']
 
 # get zillow data
-df = wr.get_zillow()
+df = wr.zillow_2017()
 
-# separate data based on location
+""" # separate data based on location
 la_city = df[df.county_name == 'LA_city'] # LA city
 la = df[df.county_name == 'LA'] # LA county
 ventura = df[df.county_name == 'Ventura'] # Ventura county
@@ -308,25 +297,19 @@ orange = orange[features_counties]
 
 # remove unneeded columns and add dummy variables for county_name in the main data set
 df = wr.dummies(df)
-df = df[features]
+df = df[features] 
+
 
 #split_counties into train, validate, test data sets and target vars
 XLA1, XLA2, XLA3, yla1, yla2, yla3 = wr.full_split_zillow(la)
 XLC1, XLC2, XLC3, ylc1, ylc2, ylc3 = wr.full_split_zillow(la_city)
 XO1, XO2, XO3, yo1, yo2, yo3 = wr.full_split_zillow(ventura)
 XV1, XV2, XV3, yv1, yv2, yv3 = wr.full_split_zillow(orange)
-# scale counties data sets
-XLA1, XLA2, XLA3 = wr.standard_scale_zillow(XLA1, XLA2, XLA3, counties=True)
-XLC1, XLC2, XLC3 = wr.standard_scale_zillow(XLC1, XLC2, XLC3, counties=True)
-XO1, XO2, XO3 = wr.standard_scale_zillow(XO1, XO2, XO3, counties=True)
-XV1, XV2, XV3 = wr.standard_scale_zillow(XV1, XV2, XV3, counties=True)
+"""
 
 # split the main data into 3 data sets and 3 target arrays
-X_train, X_validate, X_test, y_train, y_validate, y_test = wr.full_split_zillow(df)
+X_train, y_train, X_validate, y_validate, X_test, y_test = wr.x_y(df, 'tax_value')
 
-# get scaled X_train, X_validate, X_test sets
-# standard scaler
-X_train, X_validate, X_test = wr.standard_scale_zillow(X_train, X_validate, X_test)
 
 # get a baseline value = median of the train set's target
 baseline = y_train.mean()
@@ -386,11 +369,12 @@ def run_models(X_train, X_validate, y_train, y_validate, f_name='stand '):
         # add the score results to the scores Data Frame
         scores.loc[len(scores.index)] = [item, feature_name, R2, R2_val]
 
+"""
 def run_polinomial(X1, X2, y_train, y_validate, f_name='poly '):
     '''
     
     '''
-    f = ['beds', 'bath']
+    f = ['bedrooms', 'baths']
     poly = PolynomialFeatures(degree=3, include_bias=False, interaction_only=False)
     poly.fit(X1[f])
     # create a df with transformed features of the train set
@@ -431,113 +415,21 @@ def run_polinomial(X1, X2, y_train, y_validate, f_name='poly '):
 
         # add the score results to the scores Data Frame
         scores.loc[len(scores.index)] = [key, feature_name, R2, R2_val]
-
+"""
 
 def get_scores():
     # empty the scores data frame
     scores.drop(scores.index, axis=0, inplace=True)
     run_models(X_train, X_validate, y_train, y_validate, f_name='stand ')
-    run_polinomial(X_train.iloc[:, :-1], X_validate.iloc[:, :-1], y_train, y_validate)
+    #run_polinomial(X_train.iloc[:, :-1], X_validate.iloc[:, :-1], y_train, y_validate)
     return scores.sort_values(by=['R2_train'], ascending=False).head(10)
 
 
-############# RUN MODELS ON CLUSTERS ##############
-
-X_train_num, X_validate_num, X_test_num = cl.add_numerical_clusters(X_train, X_validate, X_test)
-X_train_loc, X_validate_loc, X_test_loc = cl.add_location_clusters(X_train, X_validate, X_test)
-
-def check_numerical_clusters():
-    '''
-    run models on numerical cluster data frames
-    '''
-    # empty the scores data frame
-    scores.drop(scores.index, axis=0, inplace=True)
-    
-    # create data frames based on clusters and run models
-    for j in range(6):
-        # separate by clusters
-        X1 = X_train_num[X_train_loc.numerical_clusters == j]
-        X2 = X_validate_num[X_validate_loc.numerical_clusters == j]
-        # drop column location_cluster
-        X1.drop(columns='numerical_clusters', inplace=True)
-        X2.drop(columns='numerical_clusters', inplace=True)
-        # separate y_train
-        y1 = y_train[X1.index]
-        y2 = y_validate[X2.index]
-        
-        # run models
-        run_models(X1, X2, y1, y2, j)
-        run_polinomial(X1.iloc[:, :-1], X2.iloc[:, :-1], y1, y2, j)
-        
-    return scores.head(5)
-
-def check_location_clusters():
-    '''
-    run models on location cluster data frames
-    '''
-    # empty the scores data frame
-    scores.drop(scores.index, axis=0, inplace=True)
-    
-    # create data frames based on clusters and run models
-    for j in range(6):
-        # separate by clusters
-        X1 = X_train_loc[X_train_loc.location_clusters == j]
-        X2 = X_validate_loc[X_validate_loc.location_clusters == j]
-        # drop column location_cluster
-        X1.drop(columns='location_clusters', inplace=True)
-        X2.drop(columns='location_clusters', inplace=True)
-        # separate y_train
-        y1 = y_train[X1.index]
-        y2 = y_validate[X2.index]
-        
-        # run models
-        run_models(X1, X2, y1, y2, j)
-        run_polinomial(X1.iloc[:, :-1], X2.iloc[:, :-1], y1, y2, j)
-        
-    return scores.head(5)
-
-def get_cluster_scores():
-    '''
-    this function runs models on clustered subsets
-    returns the data frame with first 10 results of 
-    '''
-    loc_clust = check_location_clusters().iloc[:10, :]
-    num_clust = check_numerical_clusters().iloc[:10, :]
-    cluster_results = pd.concat([loc_clust, num_clust], axis=1)
-    columns = ['location_clusters', 'feature_name_loc', 'Location_R2_train', 'R2_val_loc',\
-           'numerical_clusters', 'feature_name_num', 'Numerical_R2_train', 'R2_val_num']
-    cluster_results.columns = columns
-    columns2 = ['Location_R2_train', 'R2_val_loc', 'Numerical_R2_train', 'R2_val_num']
-    cluster_results = cluster_results[columns2]
-    
-    return cluster_results
-
-######### RUN MODELS ON COUNTY DATA SETS
-def get_counties_scores(): 
-    # empty the scores data frame
-    scores.drop(scores.index, axis=0, inplace=True)
-    # la county
-    run_models(XLA1, XLA2, yla1, yla2, f_name='la stand')
-    run_polinomial(XLA1, XLA2, yla1, yla2, f_name='la poly')
-
-    # la city
-    run_models(XLC1, XLC2, ylc1, ylc2, f_name='la_city stand')
-    run_polinomial(XLC1, XLC2, ylc1, ylc2, f_name='la_city poly')
-
-    # orange county
-    run_models(XO1, XO2, yo1, yo2, f_name='orange stand')
-    run_polinomial(XO1, XO2, yo1, yo2, f_name='orange poly')
-
-    # ventura county
-    run_models(XV1, XV2, yv1, yv2, f_name='ventura stand')
-    run_polinomial(XV1, XV2, yv1, yv2, f_name='ventura poly')
-    
-    return scores.sort_values(by=['R2_train', 'R2_validate'], ascending=False).head(10)
-
+"""
 ####### get the scores of the best model ###########
 def get_final_scores():
     XLC1, XLC2, XLC3, ylc1, ylc2, ylc3 = wr.full_split_zillow(la_city)
-    LC1, XLC2, XLC3 = wr.standard_scale_zillow(XLC1, XLC2, XLC3, counties=True)
+
     rf = RandomForestRegressor(max_depth=4, random_state=seed)
     rf.fit(XLC1, ylc1)
     y_hat_train = rf.predict(XLC1)
@@ -549,3 +441,4 @@ def get_final_scores():
     final_scores = pd.DataFrame(columns=['model_name','train', 'validate', 'test'])
     final_scores.loc[len(final_scores.index)] = ['Random Forest Regressor', R2_train, R2_validate, R2_test]
     return final_scores
+"""
